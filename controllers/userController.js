@@ -6,7 +6,7 @@ const generateUserId = async () => {
   const counter = await Counter.findOneAndUpdate(
     { name: "userId" },
     { $inc: { sequenceValue: 1 } },
-    { new: true, upsert: true } // `upsert: true` creates the counter if it doesn't exist
+    { new: true, upsert: true } 
   );
 
   return counter.sequenceValue.toString();
@@ -17,7 +17,7 @@ const userController = {
     try {
       const { name, password, score, phone, address, email, role } = req.body;
 
-      // Generate a unique userId
+      
       const userEmail = await User.findOne({ email: email });
       if (userEmail) {
         return res.status(400).json({ error: "email is already registered" });
@@ -26,7 +26,6 @@ const userController = {
       const userId = await generateUserId();
       const hashedTechnicianPassword = await bcrypt.hash(password, 10);
 
-      // Create a new user instance
       const newUser = new User({
         userId,
         name,
@@ -35,10 +34,9 @@ const userController = {
         address,
         email,
         password: hashedTechnicianPassword,
-        role: role || "user", // Default to 'user' role if not specified
+        role: role || "user", 
       });
 
-      // Save user to the database
       await newUser.save();
 
       res
