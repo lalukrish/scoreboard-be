@@ -5,6 +5,16 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
 const generateUserId = async () => {
+  const reset = false;
+
+  if (reset) {
+    await Counter.findOneAndUpdate(
+      { name: "userId" },
+      { $set: { sequenceValue: 1 } },
+      { new: true, upsert: true }
+    );
+  }
+
   const counter = await Counter.findOneAndUpdate(
     { name: "userId" },
     { $inc: { sequenceValue: 1 } },
@@ -115,28 +125,26 @@ const userController = {
   },
   getAllUsers: async (req, res) => {
     try {
-      const page = parseInt(req.query.page) || 1; // Default to page 1 if not provided
-      const limit = parseInt(req.query.limit) || 10; // Default to limit of 10 users per page if not provided
-      const searchQuery = req.query.search || ""; // Search query from the frontend (optional)
-
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit) || 10;
+      const searchQuery = req.query.search || "";
       const skip = (page - 1) * limit;
 
-      // Construct search query to search by name or userId
       const searchCriteria = {
         role: "user",
         $or: [
-          { name: { $regex: searchQuery, $options: "i" } }, // Case-insensitive search for 'name'
-          { userId: { $regex: searchQuery, $options: "i" } }, // Case-insensitive search for 'userId'
+          { name: { $regex: searchQuery, $options: "i" } },
+          { userId: { $regex: searchQuery, $options: "i" } },
         ],
       };
 
-      // Find users with role "user" and apply search if provided
-      const users = await User.find(searchCriteria).skip(skip).limit(limit);
+      const users = await User.find(searchCriteria)
+        .sort({ score: -1, name: 1 })
+        .skip(skip)
+        .limit(limit);
 
-      // Count the total number of users matching the search query
       const totalUsers = await User.countDocuments(searchCriteria);
 
-      // Return an empty array if no users were found, but include pagination info
       if (users.length === 0) {
         return res.status(200).json({
           users: [],
@@ -147,7 +155,6 @@ const userController = {
         });
       }
 
-      // Return the list of users along with pagination info
       res.status(200).json({
         users,
         totalUsers,
@@ -160,6 +167,7 @@ const userController = {
       res.status(500).json({ error: "Failed to retrieve users" });
     }
   },
+
   deleteUser: async (req, res) => {
     try {
       const userId = req.params.id;

@@ -14,10 +14,7 @@ const authenicatedUser = (req, res, next) => {
   }
 
   try {
-    const decoded = jwt.verify(
-      token,
-      "sdfsdf2SD34NZXRasdr34nsdrn3sDsdfasrWWAr"
-    );
+    const decoded = jwt.verify(token, "sdfsdf2SD34NZXR2stesDsdfasrWWAr");
     req.user = decoded;
     next();
   } catch (error) {
